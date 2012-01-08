@@ -13,14 +13,42 @@ from PySide import QtCore, QtGui, QtNetwork
 def sigint_cb(*args):
     os._exit(0)
     
-def getTrigger():
-    d, a, b = trigger_listen.readDatagram(trigger_listen.pendingDatagramSize())
-    if d == 'shift':
-        print 'Got shift trigger'
-    elif d == 'ctrl':
-        print 'Got ctrl trigger'
-    else:
-        print 'Got print trigger'
+class RegionGrabber(QtGui.QWidget):
+    def __init__(self):
+        QtGui.QWidget.__init__(self, None, QtCore.Qt.X11BypassWindowManagerHint \
+                                   | QtCore.Qt.WindowStaysOnTopHint \
+                                   | QtCore.Qt.FramelessWindowHint \
+                                   | QtCore.Qt.Tool)
+        self.desktop = QtGui.QPixmap.grabWindow(app.desktop().winId())
+        self.resize(self.desktop.size())
+        self.move(0, 0)
+        self.setCursor(QtCore.Qt.CrossCursor)
+        
+    def trigger(self):
+        global trigger_listen
+        print "triggered"
+        trigger_listen.readyRead.connect(self.trigger)
+        return True
+        #self.setVisible(True)
+        #self.grabMouse()
+        #self.grabKeyboard()
+    
+    def keyPressEvent(self, e):
+        if e.key() == QtCore.Qt.Key_Escape:
+            print "escaped"
+            #self.setVisible(False)
+            #self.releaseKeyboard()
+            #self.releaseMouse()
+            
+    def paintEvent(self, e):
+        painter = QtGui.QPainter(self)
+        pal = QtGui.QPalette(QtGui.QToolTip.palette())
+        font = QtGui.QToolTop.font()
+        handleColor = pal.color(QtGui.QPalette.Active, QtGui.QPalette.Highlight)
+        handleColor.setAlpha(160)
+        overlayColor = QtGui.QColor(0, 0, 0, 160)
+        textColor = pal.color(QtGui.QPalette.Active, QtGui.QPalette.Text)
+        textBackgroundColor = None
 
 app = QtGui.QApplication(sys.argv)
 
@@ -44,7 +72,8 @@ systray.setVisible(True)
 
 trigger_listen = QtNetwork.QUdpSocket()
 trigger_listen.bind(QtNetwork.QHostAddress("127.0.0.1"), 63949)
-trigger_listen.readyRead.connect(getTrigger)
+region_grabber = RegionGrabber()
+trigger_listen.readyRead.connect(region_grabber.trigger)
 
 signal.signal(signal.SIGINT, sigint_cb)
 app.exec_()
