@@ -28,17 +28,16 @@ class RegionGrabber(QtGui.QWidget):
         global trigger_listen
         print "triggered"
         trigger_listen.readyRead.connect(self.trigger)
-        return True
-        #self.setVisible(True)
-        #self.grabMouse()
-        #self.grabKeyboard()
+        self.setVisible(True)
+        self.grabMouse()
+        self.grabKeyboard()
     
     def keyPressEvent(self, e):
         if e.key() == QtCore.Qt.Key_Escape:
             print "escaped"
-            #self.setVisible(False)
-            #self.releaseKeyboard()
-            #self.releaseMouse()
+            self.setVisible(False)
+            self.releaseKeyboard()
+            self.releaseMouse()
             
     def paintEvent(self, e):
         painter = QtGui.QPainter(self)
